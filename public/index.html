@@ -835,6 +835,28 @@ Animation Keyframes
 
   <script>
 
+            document.addEventListener('DOMContentLoaded', function() {
+            // Request permission to access the speaker
+            navigator.permissions.query({ name: 'speaker' })
+                .then(permissionStatus => {
+                    if (permissionStatus.state === 'granted') {
+                        // Play audio for the first 5 seconds
+                        const audio = new Audio('iron_man_2.mp3');
+                        audio.play();
+                    } else if (permissionStatus.state === 'prompt') {
+                        console.log('Requesting permission...');
+                        permissionStatus.onchange = function() {
+                            if (permissionStatus.state === 'granted') {
+                                // Play audio for the first 5 seconds
+                                const audio = new Audio('iron_man_2.mp3');
+                                audio.play();
+                            }
+                        };
+                    }
+                });
+        });
+
+
     document.addEventListener('DOMContentLoaded', function() {
       // Play audio for the first 5 seconds
       const audio = new Audio('iron_man_2.mp3');
