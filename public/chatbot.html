@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> My AI Assistant </title>
+</head>
+
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        background: url('https://img.freepik.com/free-photo/vivid-blurred-colorful-background_58702-2655.jpg?w=900&t=st=1707586592~exp=1707587192~hmac=08e694d2a4fb79371496f8cc34e530ee01f7b2fce49d20f816e8a7c85d30a20b');
+        background-repeat: no-repeat;
+        background-size: cover;
+    }
+    
+    #chat-container {
+        max-width: 1200px;
+        height: 500px;
+        margin: 20px auto;
+        background-color: #fff;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        position: relative; /* Added to make space for the fixed input container */
+    }
+    
+    #input-container {
+      border-radius: 15px;
+        display: flex;
+        padding: 10px;
+        border-top: 1px solid #ddd;
+        position: fixed;
+        bottom: 0;
+        width:92.5vw;
+        background-color: #fff;
+        z-index: 1; /* Ensure it's above the response container */
+    }
+    
+    #user-input {
+        flex: 1;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        outline: none;
+    }
+    
+    #send-button {
+        background-color: #4caf50;
+        color: #fff;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 4px;
+        cursor: pointer;
+        margin-right: 10px;
+    }
+
+    #stop-button {
+        background-color: #3ebfca;
+        color: #fff;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 4px;
+        cursor: pointer;
+        margin-right: 10px;
+    }
+    #send-button:hover {
+        background-color: #e912c5;
+        transition: background-color 0.7s linear;
+    
+    }
+    #voice-icon {
+        background-color: #e91212;
+        color: #fff;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    #voice-icon:hover {
+        background-color: #1281e9;
+        transition: background-color 0.7s linear;
+    }
+    
+    #response-container {
+        max-height: calc(100% - 60px); /* Adjust as needed */
+        overflow-y: auto;
+        padding: 10px;
+    }
+    
+    .message {
+        margin-bottom: 10px;
+    }
+    
+    .user-message {
+        text-align: right;
+    }
+    
+    .bot-message {
+        text-align: left;
+    }
+    
+    .message-content {
+        background-color: #000000;
+        color: #fff;
+        padding: 8px;
+        border-radius: 4px;
+        display: inline-block;
+        border-radius: 15px;
+    }
+</style>
+<body>
+
+<div id="chat-container">
+    <div id="response-container"></div>
+    <div id="input-container">
+        <input type="text" id="user-input" placeholder="Type your message...">
+        <button id="send-button" onclick="sendMessage()">Send
+            <button id="stop-button">Stop</button>
+        </button>
+        <button id="voice-icon">Voice</button>
+
+    </div>
+</div>
+
+<!-- ... (previous HTML content) ... -->
+<script>
+    var userInput = document.getElementById('user-input').value;
+    var responseContainer = document.getElementById('response-container');
+    let voice_text = "";
+    let utterance = null;
+    
+    const button = document.querySelector('button');
+    const voiceIcon = document.getElementById('voice-icon');
+    
+    // Check if the browser supports speech recognition
+    if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
+        // Enable the microphone icon
+        voiceIcon.classList.add('active');
+    
+        // Create a new SpeechRecognition instance
+        const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+    
+        // Set the properties for speech recognition
+        recognition.lang = 'en-US'; // Specify the language
+        recognition.continuous = false; // Stop listening when speech ends
+    
+        // Add an event listener to the voice icon
+        voiceIcon.addEventListener('click', () => {
+            // Start speech recognition when the icon is clicked
+            recognition.start();
+        });
+    
+        // Add an event listener for the recognition result
+        recognition.addEventListener('result', (event) => {
+            const transcript = event.results[0][0].transcript; // Get the recognized transcript
+            let value = "";
+    
+            value = transcript;
+    
+            voice_text = value;
+    
+            console.log(voice_text, "voice")
+            // Set the input value to the recognized transcript
+            button.click(); // Trigger the click event on the "Add" button
+        });
+    
+        // Add an event listener for errors
+        recognition.addEventListener('error', (event) => {
+            console.error('Speech recognition error:', event.error);
+        });
+    } else {
+        // Disable the microphone icon if speech recognition is not supported
+        voiceIcon.classList.add('disabled');
+    }
+    
+    // Function to speak the text
+    function speakText(text) {
+        // Stop any ongoing speech
+        stopSpeech();
+    
+        // Create a new SpeechSynthesisUtterance object
+        utterance = new SpeechSynthesisUtterance(text);
+    
+        // Speak the text
+        window.speechSynthesis.speak(utterance);
+    }
+    
+    // Function to stop speech
+    function stopSpeech() {
+        // If there is an ongoing speech, stop it
+        if (utterance !== null) {
+            window.speechSynthesis.cancel();
+            utterance = null;
+        }
+    }
+    
+    // Event listener for stop button click
+    document.getElementById('stop-button').addEventListener('click', stopSpeech);
+    
+    async function sendMessage() {
+        try {
+            var userInput = document.getElementById('user-input').value;
+    
+            if (voice_text.length > 0) {
+                userInput = voice_text;
+            }
+    
+            var responseContainer = document.getElementById('response-container');
+    
+            // Display user message
+            var userMessage = document.createElement('div');
+            userMessage.className = 'message user-message';
+            var userMessageContent = document.createElement('div');
+            userMessageContent.className = 'message-content';
+            userMessageContent.textContent = userInput;
+            userMessage.appendChild(userMessageContent);
+            responseContainer.appendChild(userMessage);
+    
+            // Make a request to your local server
+            let response = await fetch('/api/chatbard', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    messages: [{ content: userInput }]
+                }),
+            });
+    
+            let responseData = await response.json();
+            console.log('API Response:', responseData);
+    
+            if (responseData !== undefined && responseData !== "") {
+                // Format and display bot response
+                var botResponse = document.createElement('div');
+                botResponse.className = 'message bot-message';
+                var botResponseContent = document.createElement('div');
+                botResponseContent.className = 'message-content';
+    
+                // Replace asterisks with spaces
+                responseData = responseData.replace(/\*/g, ' ');
+    
+                // Append the formatted response to the bot response content
+                botResponseContent.textContent = responseData;
+                botResponse.appendChild(botResponseContent);
+                responseContainer.appendChild(botResponse);
+    
+                // Speak the response
+                speakText(responseData);
+            } else {
+                console.error('Error: Empty or undefined response data.');
+            }
+    
+            // Remove older messages if the count exceeds 10
+            var messages = responseContainer.getElementsByClassName('message');
+            if (messages.length > 10) {
+                responseContainer.removeChild(messages[0]);
+            }
+    
+            // Clear user input
+            document.getElementById('user-input').value = '';
+    
+            // Scroll to the bottom of the response container
+            responseContainer.scrollTop = responseContainer.scrollHeight;
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    }
+    
+    
+</script>
+
+
+
+
+</body>
+</html>
