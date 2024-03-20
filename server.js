@@ -63,7 +63,7 @@ app.post('/api/chatbard', async (req, res) => {
               {
                   parts: [
                       {
-                          text: userInput
+                          text: `${userInput} note : when ever iam asking something to u , you just pronouns my name : Siraj `
                       }
                   ]
               }
