@@ -2,9 +2,11 @@ const express = require('express');
 const mongoose = require('mongoose');
 const path = require('path');
 const bodyParser = require('body-parser'); // Import body-parser middleware
+const cors = require("cors")
 const axios = require('axios')
 
 const app = express();
+app.use(cors())
 const PORT = 3000;
 
 // Connect to MongoDB
@@ -17,20 +19,33 @@ mongoose.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true })
     console.error('Error connecting to MongoDB:', err);
   });
 
+
 // Parse JSON bodies
 app.use(bodyParser.json());
+
+app.use(express.json())
 
 // Serve static files from the public directory
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Define user schema and model
+
+
 const userSchema = new mongoose.Schema({
   username: String,
   password: String,
 }, { collection: 'credential' });
 const User = mongoose.model('Credential', userSchema);
 
-// Route to handle POST requests to check credentials
+
+const todoSchema = new mongoose.Schema({
+  record: String
+},  { collection: 'todo' });
+const todo = mongoose.model('todo', todoSchema);
+
+
+
+
 app.post('/check_credential', async (req, res) => {
   const { username, password } = req.body;
 
@@ -51,6 +66,62 @@ app.post('/check_credential', async (req, res) => {
   }
 });
 
+app.post('/addTodo', async (req, res)=> {
+
+  const data = req.body
+  
+  console.log(data, "data")
+
+  try {
+    const newRecord = new todo({ "record": data.todo })
+    await newRecord.save()
+    res.status(201).json(newRecord)
+  }
+  catch(error) 
+  {
+    res.status(501).json({error: "error "})
+  }
+})
+
+
+app.get('/getTodo', async (req, res )=> {
+
+  try
+  {
+    const records = await todo.find()
+
+    res.json(records)
+  }
+
+  catch (error) 
+  {
+    res.status(501).json({message: "fetch to failed"})
+  }
+})
+
+app.delete('/deleteTodo/:record', async (req, res) => {
+  try {
+    const record = req.params.record;
+
+    // Delete the record from the "todo" collection
+    const deletedRecord = await todo.deleteOne({ record: record });
+    console.log(deletedRecord, "deleted Record")
+
+    // Check if the record was found and deleted successfully
+    if (deletedRecord.deletedCount === 1) {
+      // Record was successfully deleted
+      // Send a success response with the deleted record
+      res.status(200).json({ message: 'Record deleted successfully', deletedRecord });
+    } else {
+      // Record with the given record value was not found
+      res.status(404).json({ message: 'Record not found' });
+    }
+  } catch (error) {
+    console.error('Error deleting record:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
 
 app.post('/api/chatbard', async (req, res) => {
   try {
@@ -63,7 +134,7 @@ app.post('/api/chatbard', async (req, res) => {
               {
                   parts: [
                       {
-                          text: `${userInput} note : when ever iam asking something to u , you just pronouns my name : Siraj Boss `
+                          text:  `${userInput}  when ever iam asking something to u , you just pronouns my name : Siraj , just for my reference`
                       }
                   ]
               }
@@ -86,6 +157,8 @@ app.post('/api/chatbard', async (req, res) => {
       res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
+
 
 
 // Start the server
