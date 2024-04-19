@@ -146,7 +146,7 @@
 
        <input type="text" >
 
-       <button>ADD</button>
+       <button onclick="adddata()">ADD</button>
 
     
 <button id="voice-icon">Voice</button>
@@ -156,98 +156,86 @@
 
     <script >
 
-        let value = document.querySelector('input');
+     
 
-let div = document.querySelector('div');
+      let div = document.querySelector('.div-box');
+      let input = document.querySelector('input');
+     
+      // Function to add data
+      const adddata = async () => {
+          // Fetch the value of the input field
+          const todo = input.value.trim();
+  
+          // Only proceed if the input is not empty
+          if (todo !== '') {
 
-let button = document.querySelector('button');
+            AddTask(input.value)
+              // Make a POST request to the server
+              const response = await fetch("http://localhost:3000/addTodo", {
+                  method: "POST",
+                  headers: {
+                      'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({ "todo": todo })
+              });
+            
+              // Parse and log the response
+              const responseData = await response.json();
+              console.log('API Response:', responseData);
 
-let todos = [];
-
-// Add a variable for the voice icon
-const voiceIcon = document.getElementById('voice-icon');
-
-// Check if the browser supports speech recognition
-if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
-  // Enable the microphone icon
-  voiceIcon.classList.add('active');
-
-  // Create a new SpeechRecognition instance
-  const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-
-  // Set the properties for speech recognition
-  recognition.lang = 'en-US'; // Specify the language
-  recognition.continuous = false; // Stop listening when speech ends
-
-  // Add an event listener to the voice icon
-  voiceIcon.addEventListener('click', () => {
-    // Start speech recognition when the icon is clicked
-    recognition.start();
-  });
-
-  // Add an event listener for the recognition result
-  recognition.addEventListener('result', (event) => {
-    const transcript = event.results[0][0].transcript; // Get the recognized transcript
-
-    value.value = transcript; // Set the input value to the recognized transcript
-    button.click(); // Trigger the click event on the "Add" button
-  });
-
-  // Add an event listener for errors
-  recognition.addEventListener('error', (event) => {
-    console.error('Speech recognition error:', event.error);
-  });
-} else {
-  // Disable the microphone icon if speech recognition is not supported
-  voiceIcon.classList.add('disabled');
-}
+              
+  
+              // Clear the input field after submission
+              input.value = ""
 
 
-window.onload = () =>{
+          }
 
-    todos = JSON.parse(localStorage.getItem('todos')) || [];
+         else 
+         {
+          alert("Must Enter One Todo List")
+         }
+      }
+      
 
-    todos.forEach(x => AddTask(x));
+      window.onload = async () => {
+        try {
+          const response = await fetch("http://localhost:3000/getTodo", {
+            method: "GET",
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          });
+      
+          if (!response.ok) {
+            throw new Error('Failed to fetch todos');
+          }
+      
+          const todos = await response.json();
 
-    
-}
+          todos.map((data)=> AddTask(data.record))
 
-console.log(todos)
-
-button.addEventListener('click',() =>{
-
-    if(value.value == ""){
-
-        alert("Must Enter One Task")
-    }
-
-    else 
-    {
-    todos.push(value.value);
-
-    AddTask(value.value);
-
-    localStorage.setItem('todos', JSON.stringify(todos))
-    
-    value.value ='';
-
-    }
-    
-})
-
+          console.log(todos, "todo");
+        } catch (error) {
+          console.error('Error fetching todos:', error);
+        }
+      };
+      
 
 
 function AddTask(todo){
 
-    let para = document.createElement('p');
+        console.log(todo, "todo")
 
-    para.classList.add("para");
+        let para = document.createElement('p');
 
-    para.innerHTML = todo;
+        para.classList.add("para");
 
-    div.appendChild(para)
+        para.innerHTML = todo;
 
-    para.addEventListener('click',()=>{
+        div.appendChild(para)
+
+        para.addEventListener('click',()=>{
 
         para.style.textDecoration = "line-through"
 
@@ -263,16 +251,27 @@ function AddTask(todo){
     })
 }
 
-function remove(todo){
+const remove = async (record) => {
+  
 
-    let index = todos.indexOf(todo)
+  try{
+  const response = await fetch(`http://localhost:3000/deleteTodo/${record}` , {
 
-    if(index > -1){
-
-        todos.splice(index,1)
+    method:"DELETE",
+    headers: {
+      "content-type": "application/json"
     }
+  })
+  
+  const filteredData = await response.json()
+  
+  console.log(filteredData, "filter")
+  }
 
-    localStorage.setItem("todos", JSON.stringify(todos))
+  catch(error)
+  {
+    console.log(error)
+  }
 
    
 }
